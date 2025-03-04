@@ -18,27 +18,27 @@ declare_id!("BTw34Cvm8Jh9cNBXpeBM9qCV8nNwTV7vCb7BchMBi8Hc");
 pub mod gifportal {
     use super::*;
 
-    pub fn start_stuff_off(context: Context<StartStuffOff>) -> ProgramResult {
-        let base_account = &mut context.accounts.base_account;
+    pub fn initialize(context: Context<Initialize>) -> ProgramResult {
+        let gifs_account = &mut context.accounts.gifs_account;
 
-        base_account.total_gifs = 0;
+        gifs_account.gif_count = 0;
 
         Ok(())
     }
 
-    pub fn add_gif(context: Context<AddGif>, gif_link: String)
+    pub fn create_gif(context: Context<CreateGif>, url: String)
         -> ProgramResult {
-            let base_account = &mut context.accounts.base_account;
+            let gifs_account = &mut context.accounts.gifs_account;
             let user = &mut context.accounts.user;
 
-            let item = ItemStruct {
-                gif_link: gif_link.to_string(),
+            let item = Gif {
+                url: url.to_string(),
                 user_address: *user.to_account_info().key,
             };
 
-            base_account.gif_list.push(item);
+            gifs_account.gifs.push(item);
 
-            base_account.total_gifs += 1;
+            gifs_account.gif_count += 1;
 
             Ok(())
         }
@@ -48,30 +48,30 @@ pub mod gifportal {
  * Structs (Contexts) *
  **********************/
 #[derive(Accounts)]
-pub struct StartStuffOff<'info> {
+pub struct Initialize<'info> {
     #[account(init, payer=user, space=9000)]
-    pub base_account: Account<'info, BaseAccount>,
+    pub gifs_account: Account<'info, GifsAccount>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-pub struct AddGif<'info> {
-    #[account(mut)]
-    pub base_account: Account<'info, BaseAccount>,
-    #[account(mut)]
-    pub user: Signer<'info>,
+#[account]
+pub struct GifsAccount {
+    pub gif_count: u64,
+    pub gifs: Vec<Gif>
 }
 
 #[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
-pub struct ItemStruct {
-    pub gif_link: String,
+pub struct Gif {
+    pub url: String,
     pub user_address: Pubkey,
 }
 
-#[account]
-pub struct BaseAccount {
-    pub total_gifs: u64,
-    pub gif_list: Vec<ItemStruct>
+#[derive(Accounts)]
+pub struct CreateGif<'info> {
+    #[account(mut)]
+    pub gifs_account: Account<'info, GifsAccount>,
+    #[account(mut)]
+    pub user: Signer<'info>,
 }
