@@ -3,6 +3,7 @@
  ***********/
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::entrypoint::ProgramResult;
+use uuid::Uuid;
 
 /**************
  * Program ID *
@@ -31,14 +32,15 @@ pub mod gifportal {
             let gifs_account = &mut context.accounts.gifs_account;
             let user = &mut context.accounts.user;
 
-            let item = Gif {
+            let id: String = Uuid::new_v4().to_string();
+            let gif = Gif {
+                id,
                 url: url.to_string(),
                 user_address: *user.to_account_info().key,
             };
 
-            gifs_account.gifs.push(item);
-
             gifs_account.gif_count += 1;
+            gifs_account.gifs.push(gif);
 
             Ok(())
         }
@@ -59,11 +61,12 @@ pub struct Initialize<'info> {
 #[account]
 pub struct GifsAccount {
     pub gif_count: u64,
-    pub gifs: Vec<Gif>
+    pub gifs: Vec<Gif>,
 }
 
 #[derive(Debug, Clone, AnchorSerialize, AnchorDeserialize)]
 pub struct Gif {
+    pub id: String,
     pub url: String,
     pub user_address: Pubkey,
 }
